@@ -1,0 +1,94 @@
+#!/usr/bin/python3
+
+# mfig2dev [-a] [-s] [-v] <format> [fig_files]
+
+# export <format> file(s) for each given file, [TODO or all the fig files in current
+# directory if none is given]
+
+# -s : adjust bounding box according to exported depths (otherwise the
+# bounding box is computed taking all objects into account, even
+# those on depths that are not exported)
+
+# let each file being of the form main.fig,
+
+# each fig file can contain (as global fig comments starting with $$)
+# instructions to build exported files including only specified depths.
+
+# $$ suffix1 list1
+# $$ suffix2 list2
+
+# generate mainsuffix1.<format> with depths from list1 (ex 1:50,60),
+# mainsuffix2.<format> with those from list2 ...
+# no spaces in the lists!
+
+# generates main.<format> with all depths if no such comment is contained
+# or if option -a is given
+
+# special suffix <none> for no suffix, so the listed depths are used
+# for the main.<format> file
+
+import sys
+import os
+import getopt
+import glob
+
+def usage():
+    print('mfig2dev [-v] [-a] [-s] format [figfiles ...]')
+
+opt_verbose=False
+opt_all=False
+opt_size=''
+
+def main():
+    global opt_verbose, opt_all, opt_size
+
+    try:
+       opts, args = getopt.getopt(sys.argv[1:], 'asv')
+    except  getopt.GetoptError as err:
+        print(err)
+        usage()
+        sys.exit(2)
+
+    for (o,_) in opts:
+        if   o=='-v': opt_verbose=True
+        elif o=='-a': opt_all=True
+        elif o=='-s': opt_size='-K'
+
+    if len(args) < 1:
+        print("please specify format!")
+    elif len(args)==1:
+        print(glob.glob("*.fig"))
+        usage()
+    else:
+        for f in args[1:]:
+            process_file(f, args[0])
+    
+def process_file(filename, fmt):
+    if opt_verbose: print('processing', filename)
+    try:
+        f = open(filename, 'r', encoding='latin-1')
+    except IOError as err:
+        print(err)
+        sys.exit(2)
+
+    base,_ = os.path.splitext(filename)
+    found=False
+
+    # for each special comment, export with selected suffix and depths
+    for l in f:
+        if l[0:4]=='# $$':
+            found=True
+    #        if opt_verbose: print(l,end='')
+            s = l[5:].index(' ')
+            suffix=l[5:5+s]
+            depths=l[5+s+1:-1]
+            if opt_verbose: print("  generating", base+suffix+"."+fmt, "with depths", depths)
+            if suffix=='<none>': suffix=''
+            os.system('fig2dev -L{} {} -D +{} {} {}{}.{}'.format(fmt, opt_size, depths, filename, base,suffix,fmt))
+
+    # the global, no suffix file
+    if not found or opt_all:
+        if opt_verbose: print("  generating", base+"."+fmt)
+        os.system('fig2dev -L{} {} {}.{}'.format(fmt, filename, base,fmt))
+
+main()

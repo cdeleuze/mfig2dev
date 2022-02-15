@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# mfig2dev [-a] [-s] [-v] <format> [fig_files]
+# mfig2dev [-a] [-s] [-v] [-d outputdir] <format> [fig_files]
 
 # export <format> file(s) for each given file, [TODO or all the fig files in current
 # directory if none is given]
@@ -33,26 +33,28 @@ import getopt
 import glob
 
 def usage():
-    print('mfig2dev [-v] [-a] [-s] format [figfiles ...]')
+    print('mfig2dev [-v] [-a] [-s] [-d outputdir] format [figfiles ...]')
 
 opt_verbose=False
 opt_all=False
 opt_size=''
+output_dir=''
 
 def main():
-    global opt_verbose, opt_all, opt_size
+    global opt_verbose, opt_all, opt_size, output_dir
 
     try:
-       opts, args = getopt.getopt(sys.argv[1:], 'asv')
+       opts, args = getopt.getopt(sys.argv[1:], 'asvd:')
     except  getopt.GetoptError as err:
         print(err)
         usage()
         sys.exit(2)
 
-    for (o,_) in opts:
+    for (o,a) in opts:
         if   o=='-v': opt_verbose=True
         elif o=='-a': opt_all=True
         elif o=='-s': opt_size='-K'
+        elif o=='-d': output_dir=a if a[-1]=='/' else a+'/'
 
     if len(args) < 1:
         print("please specify format!")
@@ -82,10 +84,10 @@ def process_file(filename, fmt):
             s = l[5:].index(' ')
             suffix=l[5:5+s]
             depths=l[5+s+1:-1]
-            if opt_verbose: print("  generating", base+suffix+"."+fmt, "with depths", depths)
+            if opt_verbose: print("  generating", output_dir+base+suffix+"."+fmt, "with depths", depths)
             if suffix=='<none>': suffix=''
-            os.system('fig2dev -L{} {} -D +{} {} {}{}.{}'.format(
-                fmt, opt_size, depths, filename, base, suffix, fmt))
+            os.system('fig2dev -L{} {} -D +{} {} {}{}{}.{}'.format(
+                fmt, opt_size, depths, filename, output_dir, base, suffix, fmt))
 
     # the global, no suffix file
     if not found or opt_all:

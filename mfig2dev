@@ -24,7 +24,7 @@
 # generates main.<format> with all depths if no such comment is contained
 # or if option -a is given
 
-# special suffix <none> for no suffix, so the listed depths are used
+# special suffix "<none>" for no suffix, so the listed depths are used
 # for the main.<format> file
 
 import sys
@@ -71,7 +71,7 @@ def process_file(filename, fmt):
         print(err)
         sys.exit(2)
 
-    base,_ = os.path.splitext(filename)
+    base,_ = os.path.splitext(os.path.split(filename)[1])
     found=False
 
     # for each special comment, export with selected suffix and depths
@@ -84,7 +84,8 @@ def process_file(filename, fmt):
             depths=l[5+s+1:-1]
             if opt_verbose: print("  generating", base+suffix+"."+fmt, "with depths", depths)
             if suffix=='<none>': suffix=''
-            os.system('fig2dev -L{} {} -D +{} {} {}{}.{}'.format(fmt, opt_size, depths, filename, base,suffix,fmt))
+            os.system('fig2dev -L{} {} -D +{} {} {}{}.{}'.format(
+                fmt, opt_size, depths, filename, base, suffix, fmt))
 
     # the global, no suffix file
     if not found or opt_all:

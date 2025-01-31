@@ -1,3 +1,5 @@
+NOTE: this repo is no more updated, dev now occurs on gitlab <https://gitlab.com/deleuzec/mfig2dev>
+
 # mfig2dev
 
 ## Export multiple related pictures from a single fig file
